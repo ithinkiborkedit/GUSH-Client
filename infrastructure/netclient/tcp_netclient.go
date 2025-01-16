@@ -1,14 +1,15 @@
 package netclient
 
 import (
+	"io"
 	"net"
 
 	"github.com/ithinkiborkedit/GUSH-Client.git"
 )
 
 type TCPNetClient struct {
-	conn          net.Conn
-	ProtoBufCodec ProtoBufCodec
+	conn  net.Conn
+	codec ProtoRW
 }
 
 func NewTCPNetClient() *TCPNetClient {
@@ -23,6 +24,11 @@ func (c *TCPNetClient) Connect(address string) error {
 
 	c.conn = conn
 
+	reader := io.Reader(conn)
+	writer := io.Writer(conn)
+
+	c.codec = NewProtoRW(reader, writer)
+
 	return nil
 }
 
@@ -31,25 +37,8 @@ func (c *TCPNetClient) SendCommand(cmd *GUSH.Command) error {
 		return nil
 	}
 
-	// return c.ProtoBufCodec.Encode(c.conn, cmd)
-	return c.ProtoBufCodec.Encode(c.conn, cmd)
+	return c.codec.Encode(cmd)
 }
-
-// func (c *TCPNetClient) ReadLoop(callback func(*GUSH.ServerMessage, error)) {
-// 	for {
-// 		if c.conn == nil {
-// 			callback(nil, nil)
-// 			return
-// 		}
-
-// 		msg := &GUSH.ServerMessage{}
-// 		err := ReadProto(c.conn, msg)
-// 		if err != nil {
-// 			callback(nil, err)
-// 		}
-// 		callback(msg, nil)
-// 	}
-// }
 
 func (c *TCPNetClient) ReadLoop(callback func(*GUSH.ServerMessage, error)) {
 	for {
@@ -59,7 +48,7 @@ func (c *TCPNetClient) ReadLoop(callback func(*GUSH.ServerMessage, error)) {
 		}
 
 		msg := &GUSH.ServerMessage{}
-		err := c.ProtoBufCodec.Decode(c.conn, msg)
+		err := c.codec.Decode(msg)
 		if err != nil {
 			callback(nil, err)
 		}
