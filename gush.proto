@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "github.com/ithinkiborkedit/GUSH";
+
+message command {
+    string type = 1;
+    string payload =2;
+}
+
+message ServerMessage {
+    oneof payload {
+        ChatMessage chat = 1;
+        RoomUpdate roomUpdate = 2;
+        SystemMsg systemMsg = 3;
+    }
+}
+
+message ChatMessage {
+    string playerName = 1;
+    string text = 2;
+}
+
+message RoomUpdate {
+    string roomId = 1;
+    string roomName = 2;
+    string description = 3;
+}
+
+message SystemMsg {
+    string text = 1;
+}
